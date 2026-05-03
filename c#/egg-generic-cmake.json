@@ -6,7 +6,7 @@
     },
     "exported_at": "2024-03-24T14:29:09+01:00",
     "name": "Generic CMake (C / C++ / C#)",
-    "author": "josdekurk@gmail.com",
+    "author": "itzzmateo@devflare.de",
     "description": "A generic CMake-based egg that builds and runs C, C++ and C# projects.",
     "features": null,
     "docker_images": {
