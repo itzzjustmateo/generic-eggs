@@ -1,22 +1,52 @@
-# C# Language Generic
+# CMake Language (C / C++ / C#)
 
-This egg is designed to run any generic C# application, allowing users to pull their own C# source code from a Github repository.
+This egg is designed to build and run generic CMake-based projects supporting **C, C++ and C#**. Users can pull their own source code from a GitHub repository or upload their own files directly.
 
-There is an option to allow a user to upload their own files to run a bot.
+It compiles the project using CMake and then runs the resulting binary defined by the configuration.
 
-The startup configs and commands may need changing to actually function properly.
+---
 
 ## Configuration
 
-The server will be stuck as `starting` until the egg Start Configuration is modified. You have to edit the text to match something your bot will print for Pterodactyl panel to detect it as running.
-![image](https://user-images.githubusercontent.com/10975908/126516861-c5cb4630-9f25-405c-8199-97bf5ec15a7f.png)
+The server will remain in a `starting` state until the startup detection pattern matches output from the application. You must update the detection text so that Pterodactyl can correctly detect when the application is running.
 
-You can use arrays to have multiple different values when different bots are being used
+This is important because different projects may output different startup messages.
+
+---
+
+## Startup Detection
+
+You can define multiple values to mark the server as running. This is useful when working with different projects or build outputs.
+
+Example:
 
 ```json
 {
-  "done":[
-    "change this text 1",
-    "change this text 2"
+  "done": [
+    "Build finished",
+    "Application started",
+    "Server running"
   ]
 }
+```
+
+---
+
+## Notes
+
+* Requires a valid `CMakeLists.txt` in the project root.
+* The build process uses a `build/` directory inside the container.
+* The executable name must match the `EXECUTABLE_NAME` variable.
+* Supports C, C++ and C# depending on installed toolchain and CMake configuration.
+* Make sure all required dependencies are handled by your project or installation script.
+
+---
+
+## Important
+
+If your application does not start correctly:
+
+* Check your CMake configuration
+* Verify the executable target name
+* Ensure all dependencies are installed during build
+* Confirm the startup detection text matches your pr
