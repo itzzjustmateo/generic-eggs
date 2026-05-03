@@ -1,46 +1,67 @@
 {
-    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO. This egg has been manually extended with Java version selection, Gradle/Maven build support, and Java 25 runtime support. Modify only if you understand build pipelines and runtime execution behavior.",
     "meta": {
         "version": "PTDL_v2",
         "update_url": null
     },
     "exported_at": "2024-05-13T17:14:01+01:00",
-    "name": "Generic Java",
+    "name": "Generic Java (Gradle + Maven + Multi-Version)",
     "author": "sneaky@sneakyhub.com",
-    "description": "Creates a container that runs java.",
+    "description": "Runs Java applications with support for Gradle, Maven, or direct JAR execution and selectable Java versions (8–25).",
     "features": null,
     "docker_images": {
-        "ghcr.io\/ptero-eggs\/yolks:java_8": "ghcr.io\/ptero-eggs\/yolks:java_8",
-        "ghcr.io\/ptero-eggs\/yolks:java_11": "ghcr.io\/ptero-eggs\/yolks:java_11",
-        "ghcr.io\/ptero-eggs\/yolks:java_16": "ghcr.io\/ptero-eggs\/yolks:java_16",
-        "ghcr.io\/ptero-eggs\/yolks:java_17": "ghcr.io\/ptero-eggs\/yolks:java_17",
-        "ghcr.io\/ptero-eggs\/yolks:java_19": "ghcr.io\/ptero-eggs\/yolks:java_19",
-        "ghcr.io\/ptero-eggs\/yolks:java_21": "ghcr.io\/ptero-eggs\/yolks:java_21"
+        "ghcr.io/ptero-eggs/yolks:java_8": "ghcr.io/ptero-eggs/yolks:java_8",
+        "ghcr.io/ptero-eggs/yolks:java_11": "ghcr.io/ptero-eggs/yolks:java_11",
+        "ghcr.io/ptero-eggs/yolks:java_16": "ghcr.io/ptero-eggs/yolks:java_16",
+        "ghcr.io/ptero-eggs/yolks:java_17": "ghcr.io/ptero-eggs/yolks:java_17",
+        "ghcr.io/ptero-eggs/yolks:java_19": "ghcr.io/ptero-eggs/yolks:java_19",
+        "ghcr.io/ptero-eggs/yolks:java_21": "ghcr.io/ptero-eggs/yolks:java_21",
+        "ghcr.io/ptero-eggs/yolks:java_25": "ghcr.io/ptero-eggs/yolks:java_25"
     },
     "file_denylist": [],
-    "startup": "java -Dterminal.jline=false -Dterminal.ansi=true -jar {{JARFILE}}",
+    "startup": "if [[ \"{{AUTO_UPDATE}}\" == \"1\" ]] && [[ -d .git ]]; then git pull; fi; cd /mnt/server; \n\nif [[ -f build.gradle ]]; then\n    echo \"Detected Gradle project\"\n    ./gradlew build || gradle build\n    java -jar build/libs/*.jar\nelif [[ -f pom.xml ]]; then\n    echo \"Detected Maven project\"\n    mvn package\n    java -jar target/*.jar\nelse\n    echo \"Running direct JAR\"\n    java -Dterminal.jline=false -Dterminal.ansi=true -jar {{JARFILE}}\nfi",
     "config": {
         "files": "{}",
-        "startup": "{\r\n    \"done\": \"change this text\"\r\n}",
+        "startup": "{\r\n    \"done\": \"Started\"\r\n}",
         "logs": "{}",
         "stop": "^C"
     },
     "scripts": {
         "installation": {
-            "script": "#!\/bin\/bash\r\n# Java Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\nPROJECT=java\r\n\r\napt update\r\napt install -y curl jq\r\n\r\ncd \/mnt\/server",
-            "container": "ghcr.io\/ptero-eggs\/yolks:debian",
+            "script": "#!/bin/bash\n# Java + Build Tools Installation Script\n# Server Files: /mnt/server\n\napt update\napt install -y curl jq git unzip wget\napt install -y openjdk-21-jdk maven gradle\n\ncd /mnt/server\n\necho \"Installation complete\"",
+            "container": "ghcr.io/ptero-eggs/yolks:debian",
             "entrypoint": "bash"
         }
     },
     "variables": [
         {
+            "name": "Java Version",
+            "description": "Select Java runtime version (8–25)",
+            "env_variable": "JAVA_VERSION",
+            "default_value": "21",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:8,11,16,17,19,21,25",
+            "field_type": "text"
+        },
+        {
             "name": "JAR FILE",
-            "description": "",
+            "description": "Used if no build system is detected",
             "env_variable": "JARFILE",
-            "default_value": "sneakyhub.jar",
+            "default_value": "app.jar",
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string|max:50",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Update",
+            "description": "Pull latest git repo on startup",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
             "field_type": "text"
         }
     ]
