@@ -1,0 +1,85 @@
+{
+    "_comment": "WARNING: This egg has been manually designed as a production-grade Kotlin runtime. It supports Kotlin version switching, Java version selection, Gradle/Maven builds, and script execution. Modify only if you understand JVM + Kotlin toolchains, SDKMAN, and build systems.",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2026-05-03T00:00:00+00:00",
+    "name": "Kotlin Production (Gradle / Maven / Script + Version Control)",
+    "author": "itzzmateo@devflare.de",
+    "description": "Production Kotlin runtime with Kotlin + Java version switching, Gradle/Maven support, and script execution mode.",
+    "features": null,
+    "docker_images": {
+        "ghcr.io/ptero-eggs/yolks:java_21": "ghcr.io/ptero-eggs/yolks:java_21",
+        "ghcr.io/ptero-eggs/yolks:java_17": "ghcr.io/ptero-eggs/yolks:java_17",
+        "ghcr.io/ptero-eggs/yolks:java_11": "ghcr.io/ptero-eggs/yolks:java_11",
+        "ghcr.io/ptero-eggs/yolks:java_8": "ghcr.io/ptero-eggs/yolks:java_8"
+    },
+    "file_denylist": [],
+    "startup": "export SDKMAN_DIR=$HOME/.sdkman;\n\nif [[ -d .git ]] && [[ \"{{AUTO_UPDATE}}\" == \"1\" ]]; then git pull; fi;\n\nsource \"$SDKMAN_DIR/bin/sdkman-init.sh\" || true;\n\nif [[ ! -z \"{{KOTLIN_VERSION}}\" ]]; then\n    sdk install kotlin {{KOTLIN_VERSION}} || sdk use kotlin {{KOTLIN_VERSION}};\nfi;\n\ncd /mnt/server;\n\nif [[ -f build.gradle.kts ]] || [[ -f build.gradle ]]; then\n    echo \"Gradle Kotlin project detected\";\n    ./gradlew build || gradle build;\n    java -jar build/libs/*.jar;\nelif [[ -f pom.xml ]]; then\n    echo \"Maven Kotlin project detected\";\n    mvn package;\n    java -jar target/*.jar;\nelif [[ -f {{KOTLIN_FILE}} ]]; then\n    echo \"Running Kotlin script\";\n    kotlinc -script {{KOTLIN_FILE}};\nelse\n    echo \"No build system detected, running fallback JAR\";\n    java -jar {{JAR_FILE}};\nfi",
+    "config": {
+        "files": "{}",
+        "startup": "{\n    \"done\": \"Started\"\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n\napt update\napt install -y git curl jq unzip wget build-essential zip\napt install -y openjdk-21-jdk maven gradle\n\ncd /mnt/server\n\n# Install SDKMAN for Kotlin version management\ncurl -s https://get.sdkman.io | bash || true\nexport SDKMAN_DIR=\"$HOME/.sdkman\"\nsource \"$SDKMAN_DIR/bin/sdkman-init.sh\" || true\n\n# Install Kotlin (default stable)\nsdk install kotlin || true\nsdk default kotlin {{KOTLIN_VERSION}} || true\n\necho \"Kotlin production environment ready\"\n",
+            "container": "ghcr.io/ptero-eggs/yolks:debian",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Kotlin Version",
+            "description": "Kotlin version via SDKMAN (e.g. 1.9.24, 2.0.0 if available)",
+            "env_variable": "KOTLIN_VERSION",
+            "default_value": "1.9.24",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Java Version",
+            "description": "JVM version for runtime",
+            "env_variable": "JAVA_VERSION",
+            "default_value": "21",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|in:8,11,17,21",
+            "field_type": "text"
+        },
+        {
+            "name": "Kotlin Script File",
+            "description": "Kotlin script file used when no build system exists",
+            "env_variable": "KOTLIN_FILE",
+            "default_value": "main.kt",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "JAR File",
+            "description": "Fallback jar file if no build system exists",
+            "env_variable": "JAR_FILE",
+            "default_value": "app.jar",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Update",
+            "description": "Pull latest git changes on startup",
+            "env_variable": "AUTO_UPDATE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean",
+            "field_type": "text"
+        }
+    ]
+}
